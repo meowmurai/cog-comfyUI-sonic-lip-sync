@@ -1,160 +1,118 @@
+# An example of how to convert a given API workflow into its own Replicate model
+# Replace predict.py with this file when building your own workflow
+
 import os
-import shutil
-import tarfile
-import zipfile
 import mimetypes
-from PIL import Image
+import json
+import shutil
 from typing import List
 from cog import BasePredictor, Input, Path
 from comfyui import ComfyUI
-from weights_downloader import WeightsDownloader
 from cog_model_helpers import optimise_images
-from config import config
-import requests
+from cog_model_helpers import seed as seed_helper
 
-
-os.environ["DOWNLOAD_LATEST_WEIGHTS_MANIFEST"] = "true"
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
-
-mimetypes.add_type("image/webp", ".webp")
 OUTPUT_DIR = "/tmp/outputs"
 INPUT_DIR = "/tmp/inputs"
 COMFYUI_TEMP_OUTPUT_DIR = "ComfyUI/temp"
 ALL_DIRECTORIES = [OUTPUT_DIR, INPUT_DIR, COMFYUI_TEMP_OUTPUT_DIR]
 
-IMAGE_TYPES = [".jpg", ".jpeg", ".png", ".webp"]
-VIDEO_TYPES = [".mp4", ".mov", ".avi", ".mkv"]
+mimetypes.add_type("image/webp", ".webp")
 
-with open("examples/api_workflows/instantid_default_api.json", "r") as file:
-    EXAMPLE_WORKFLOW_JSON = file.read()
+# Save your example JSON to the same directory as predict.py
+api_json_file = "workflow_api.json"
 
+# Force HF offline
+os.environ["HF_DATASETS_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 
 class Predictor(BasePredictor):
-    def setup(self, weights: str):
-        if bool(weights):
-            self.handle_user_weights(weights)
-
+    def setup(self):
         self.comfyUI = ComfyUI("127.0.0.1:8188")
         self.comfyUI.start_server(OUTPUT_DIR, INPUT_DIR)
 
-    def handle_user_weights(self, weights: str):
-        print(f"Downloading user weights from: {weights}")
-        WeightsDownloader.download("weights.tar", weights, config["USER_WEIGHTS_PATH"])
-        for item in os.listdir(config["USER_WEIGHTS_PATH"]):
-            source = os.path.join(config["USER_WEIGHTS_PATH"], item)
-            destination = os.path.join(config["MODELS_PATH"], item)
-            if os.path.isdir(source):
-                if not os.path.exists(destination):
-                    print(f"Moving {source} to {destination}")
-                    shutil.move(source, destination)
-                else:
-                    for root, _, files in os.walk(source):
-                        for file in files:
-                            if not os.path.exists(os.path.join(destination, file)):
-                                print(
-                                    f"Moving {os.path.join(root, file)} to {destination}"
-                                )
-                                shutil.move(os.path.join(root, file), destination)
-                            else:
-                                print(
-                                    f"Skipping {file} because it already exists in {destination}"
-                                )
+        # Give a list of weights filenames to download during setup
+        with open(api_json_file, "r") as file:
+            workflow = json.loads(file.read())
+        self.comfyUI.handle_weights(
+            workflow,
+            weights_to_download=[],
+        )
 
-    def handle_input_file(self, input_file: Path):
-        file_extension = self.get_file_extension(input_file)
+    def filename_with_extension(self, input_file, prefix):
+        extension = os.path.splitext(input_file.name)[1]
+        return f"{prefix}{extension}"
 
-        if file_extension == ".tar":
-            with tarfile.open(input_file, "r") as tar:
-                tar.extractall(INPUT_DIR)
-        elif file_extension == ".zip":
-            with zipfile.ZipFile(input_file, "r") as zip_ref:
-                zip_ref.extractall(INPUT_DIR)
-        elif file_extension in IMAGE_TYPES + VIDEO_TYPES:
-            shutil.copy(input_file, os.path.join(INPUT_DIR, f"input{file_extension}"))
-        else:
-            raise ValueError(f"Unsupported file type: {file_extension}")
+    def handle_input_file(
+        self,
+        input_file: Path,
+        filename: str = "image.png",
+    ):
+        shutil.copy(input_file, os.path.join(INPUT_DIR, filename))
 
-        print("====================================")
-        print(f"Inputs uploaded to {INPUT_DIR}:")
-        self.comfyUI.get_files(INPUT_DIR)
-        print("====================================")
+    # Update nodes in the JSON workflow to modify your workflow based on the given inputs
+    def update_workflow(self, workflow, **kwargs):
+        # Below is an example showing how to get the node you need and update the inputs
 
-    def get_file_extension(self, input_file: Path) -> str:
-        file_extension = os.path.splitext(input_file)[1].lower()
-        if not file_extension:
-            with open(input_file, "rb") as f:
-                file_signature = f.read(4)
-            if file_signature.startswith(b"\x1f\x8b"):  # gzip signature
-                file_extension = ".tar"
-            elif file_signature.startswith(b"PK"):  # zip signature
-                file_extension = ".zip"
-            else:
-                try:
-                    with Image.open(input_file) as img:
-                        file_extension = f".{img.format.lower()}"
-                        print(f"Determined file type: {file_extension}")
-                except Exception as e:
-                    raise ValueError(
-                        f"Unable to determine file type for: {input_file}, {e}"
-                    )
-        return file_extension
+        load_audio = workflow["10"]["inputs"]
+        load_audio["audio"] = kwargs["audio_filename"]
+
+        load_image = workflow["2"]["inputs"]
+        load_image["image"] = kwargs["image_filename"]
+
+        sampler = workflow["4"]["inputs"]
+        sampler["seed"] = kwargs["seed"]
+
+        video_combiner = workflow["5"]["inputs"]
+        video_combiner["format"] = kwargs["output_format"]
 
     def predict(
         self,
-        workflow_json: str = Input(
-            description="Your ComfyUI workflow as JSON string or URL. You must use the API version of your workflow. Get it from ComfyUI using 'Save (API format)'. Instructions here: https://github.com/fofr/cog-comfyui",
-            default="",
-        ),
-        input_file: Path = Input(
-            description="Input image, video, tar or zip file. Read guidance on workflows and input files here: https://github.com/fofr/cog-comfyui. Alternatively, you can replace inputs with URLs in your JSON workflow and the model will download them.",
+        input_image: Path = Input(
+            description="Input image",
             default=None,
         ),
-        return_temp_files: bool = Input(
-            description="Return any temporary files, such as preprocessed controlnet images. Useful for debugging.",
-            default=False,
+        input_audio: Path = Input(
+            description="Input audio",
+            default=None
         ),
-        output_format: str = optimise_images.predict_output_format(),
-        output_quality: int = optimise_images.predict_output_quality(),
-        randomise_seeds: bool = Input(
-            description="Automatically randomise seeds (seed, noise_seed, rand_seed)",
-            default=True,
+        output_format: str = Input(
+            description="Output's format, ex: image/gif, image/webp, video/h264-mp4, ...",
+            default="image/gif"
         ),
-        force_reset_cache: bool = Input(
-            description="Force reset the ComfyUI cache before running the workflow. Useful for debugging.",
-            default=False,
-        ),
+        seed: int = seed_helper.predict_seed(),
     ) -> List[Path]:
         """Run a single prediction on the model"""
         self.comfyUI.cleanup(ALL_DIRECTORIES)
 
-        if input_file:
-            self.handle_input_file(input_file)
+        # Make sure to set the seeds in your workflow
+        seed = seed_helper.generate(seed)
 
-        workflow_json_content = workflow_json
-        if workflow_json.startswith(("http://", "https://")):
-            try:
-                response = requests.get(workflow_json)
-                response.raise_for_status()
-                workflow_json_content = response.text
-            except requests.exceptions.RequestException as e:
-                raise ValueError(f"Failed to download workflow JSON from URL: {e}")
+        image_filename = None
+        if input_image:
+            image_filename = self.filename_with_extension(input_image, "image")
+            self.handle_input_file(input_image, image_filename)
 
-        wf = self.comfyUI.load_workflow(workflow_json_content or EXAMPLE_WORKFLOW_JSON)
+        if input_audio:
+            audio_filename = self.filename_with_extension(input_image, "audio")
+            self.handle_input_file(input_image, audio_filename)
 
+        with open(api_json_file, "r") as file:
+            workflow = json.loads(file.read())
+
+        self.update_workflow(
+            workflow,
+            image_filename=image_filename,
+            audio_filename=audio_filename,
+            output_format=output_format,
+            seed=seed,
+        )
+
+        wf = self.comfyUI.load_workflow(workflow)
         self.comfyUI.connect()
-
-        if force_reset_cache or not randomise_seeds:
-            self.comfyUI.reset_execution_cache()
-
-        if randomise_seeds:
-            self.comfyUI.randomise_seeds(wf)
-
         self.comfyUI.run_workflow(wf)
 
-        output_directories = [OUTPUT_DIR]
-        if return_temp_files:
-            output_directories.append(COMFYUI_TEMP_OUTPUT_DIR)
-
-        return optimise_images.optimise_image_files(
-            output_format, output_quality, self.comfyUI.get_files(output_directories)
-        )
+        # return optimise_images.optimise_image_files(
+        #     output_format, output_quality, self.comfyUI.get_files(OUTPUT_DIR)
+        # )
+        return self.comfyUI.get_files(COMFYUI_TEMP_OUTPUT_DIR)

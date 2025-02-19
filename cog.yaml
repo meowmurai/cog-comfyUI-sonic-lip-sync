@@ -5,12 +5,12 @@ build:
     - ffmpeg
   python_version: "3.12"
   python_packages:
-    - torch
-    - torchvision
+    - torch ==2.2.1
+    - torchvision ==0.17.1
     - torchaudio
     - torchsde
     - einops
-    - transformers>=4.39.3
+    - transformers
     - tokenizers>=0.13.3
     - sentencepiece
     - safetensors>=0.3.0
@@ -25,13 +25,13 @@ build:
     - soundfile
     - kornia>=0.7.1
     - websocket-client==1.6.3
-    - diffusers>=0.31.0
+    - diffusers
 
     # ComfyUI-AdvancedLivePortrait
-    - dill
+    # - dill
 
     # Inspire
-    - webcolors
+    # - webcolors
 
     # fix for pydantic issues in cog
     # https://github.com/replicate/cog/issues/1623
@@ -49,24 +49,6 @@ build:
 
     # ComfyUI_essentials
     - numba
-
-    # ComfyUI_FizzNodes
-    - pandas
-    - numexpr
-
-    # comfyui-reactor-node
-    - insightface
-    - onnx
-
-    # ComfyUI-Impact-Pack
-    - segment-anything
-    - piexif
-
-    # ComfyUI-Impact-Subpack
-    - ultralytics!=8.0.177
-
-    # comfyui_segment_anything
-    - timm
 
     # comfyui_controlnet_aux
     # https://github.com/Fannovel16/comfyui_controlnet_aux/blob/main/requirements.txt
@@ -86,24 +68,14 @@ build:
     - yacs
     - trimesh[easy]
 
-    # ComfyUI-KJNodes
+    # ComfyUI-Sonic
+    - imageio-ffmpeg
     - librosa
-    - color-matcher
 
-    # PuLID
-    - facexlib
-
-    # SUPIR
-    - open-clip-torch>=2.24.0
-    - pytorch-lightning>=2.2.1
-
-    # For train.py and custom loras
-    - huggingface_hub[hf-transfer]
-
-    # ComfyUI-segment-anything-2
-    - iopath
+    # run custom script
+    - gdown
+    - huggingface_hub
   run:
     - curl -o /usr/local/bin/pget -L "https://github.com/replicate/pget/releases/latest/download/pget_$(uname -s)_$(uname -m)" && chmod +x /usr/local/bin/pget
     - pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 predict: "predict.py:Predictor"
-train: "train.py:train"
