@@ -11,7 +11,7 @@ def predict_seed() -> int:
 
 def generate(seed: int) -> int:
     if seed is None or seed < 0:
-        seed = random.randint(0, 2**32 - 1)
+        seed = random.randint(0, 2**31 - 1)
         print(f"Random seed set to: {seed}")
     else:
         print(f"Seed set to: {seed}")
