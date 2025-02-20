@@ -46,9 +46,7 @@ class WeightsDownloader:
                     self.weights_map[weight_str]["dest"],
                 )
         else:
-            raise ValueError(
-                f"{weight_str} unavailable. View the list of available weights: https://github.com/fofr/cog-comfyui/blob/main/supported_weights.md"
-            )
+            print(f"⚠️  skipping downloading {weight_str} as it's not found in supported list. View the list of available weights: https://github.com/fofr/cog-comfyui/blob/main/supported_weights.md")
 
     def check_if_file_exists(self, weight_str, dest):
         if dest.endswith(weight_str):
