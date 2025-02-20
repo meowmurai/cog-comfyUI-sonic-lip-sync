@@ -43,8 +43,11 @@ class Predictor(BasePredictor):
         )
 
         # download custom weights
-        print("Please login to huggingface first")
-        login()
+        hf_token = os.getenv("HUGGINGFACE_TOKEN")
+        if not hf_token:
+            raise ValueError("Hugging Face token not found. Set HUGGINGFACE_TOKEN in env.")
+
+        login(token=hf_token, add_to_git_credential=False)
 
         start_time = time.time()
         snapshot_download(repo_id="phuc307/sonic-lip-sync", local_dir=os.path.join(COMFYUI_MODEL_DIR, "sonic"), local_dir_use_symlinks=False)
