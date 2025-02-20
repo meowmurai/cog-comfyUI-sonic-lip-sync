@@ -10,10 +10,13 @@ from cog import BasePredictor, Input, Path
 from comfyui import ComfyUI
 from cog_model_helpers import optimise_images
 from cog_model_helpers import seed as seed_helper
+from huggingface_hub import snapshot_download, login, hf_hub_download
+import time
 
 OUTPUT_DIR = "/tmp/outputs"
 INPUT_DIR = "/tmp/inputs"
 COMFYUI_TEMP_OUTPUT_DIR = "ComfyUI/temp"
+COMFYUI_MODEL_DIR = "ComfyUI/models"
 ALL_DIRECTORIES = [OUTPUT_DIR, INPUT_DIR, COMFYUI_TEMP_OUTPUT_DIR]
 
 mimetypes.add_type("image/webp", ".webp")
@@ -37,6 +40,31 @@ class Predictor(BasePredictor):
         self.comfyUI.handle_weights(
             workflow,
             weights_to_download=[],
+        )
+
+        # download custom weights
+        print("Please login to huggingface first")
+        login()
+
+        start_time = time.time()
+        snapshot_download(repo_id="phuc307/sonic-lip-sync", local_dir=os.path.join(COMFYUI_MODEL_DIR, "sonic"), local_dir_use_symlinks=False)
+        elapsed_time = time.time() - start_time
+        print(
+            f"✅ sonic checkpoints downloaded  in {elapsed_time:.2f}s"
+        )
+
+        start_time = time.time()
+        snapshot_download(repo_id="openai/whisper-tiny",allow_patterns=["model.safetensors", "preprocessor_config.json", "config.json"], local_dir=os.path.join(COMFYUI_MODEL_DIR, "sonic/whisper-tiny"), local_dir_use_symlinks=False)
+        elapsed_time = time.time() - start_time
+        print(
+            f"✅ whisper-tiny checkpoints downloaded  in {elapsed_time:.2f}s"
+        )
+
+        start_time = time.time()
+        hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt-1-1", filename="svd_xt_1_1.safetensors", local_dir=os.path.join(COMFYUI_MODEL_DIR, "checkpoints"))
+        elapsed_time = time.time() - start_time
+        print(
+            f"✅ svd checkpoint downloaded  in {elapsed_time:.2f}s"
         )
 
     def filename_with_extension(self, input_file, prefix):
