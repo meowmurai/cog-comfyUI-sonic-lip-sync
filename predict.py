@@ -94,8 +94,11 @@ class Predictor(BasePredictor):
             self.handle_input_file(input_image, image_filename)
 
         if input_audio:
-            audio_filename = self.filename_with_extension(input_image, "audio")
-            self.handle_input_file(input_image, audio_filename)
+            audio_filename = self.filename_with_extension(input_audio, "audio")
+            self.handle_input_file(input_audio, audio_filename)
+
+        print("input: ", image_filename, audio_filename)
+        print("input dir: ", os.listdir(INPUT_DIR))
 
         with open(api_json_file, "r") as file:
             workflow = json.loads(file.read())
