@@ -1,7 +1,7 @@
 {
   "2": {
     "inputs": {
-      "image": "anime1.png",
+      "image": "leonnado.jpg",
       "upload": "image"
     },
     "class_type": "LoadImage",
@@ -42,7 +42,7 @@
   },
   "4": {
     "inputs": {
-      "seed": 993647620,
+      "seed": 1635757051,
       "inference_steps": 25,
       "dynamic_scale": 1,
       "fps": 25,
@@ -74,6 +74,10 @@
       "images": [
         "4",
         0
+      ],
+      "audio": [
+        "10",
+        0
       ]
     },
     "class_type": "VHS_VideoCombine",
@@ -99,7 +103,7 @@
   },
   "10": {
     "inputs": {
-      "audio": "sing_female_10s.wav"
+      "audio": "sing_female_rap_10s.MP3"
     },
     "class_type": "LoadAudio",
     "_meta": {
