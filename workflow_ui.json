@@ -1,0 +1,468 @@
+{
+  "last_node_id": 12,
+  "last_link_id": 21,
+  "nodes": [
+    {
+      "id": 12,
+      "type": "ImageOnlyCheckpointLoader",
+      "pos": [
+        178.92849731445312,
+        -394.79296875
+      ],
+      "size": [
+        554.4000244140625,
+        98
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            20
+          ]
+        },
+        {
+          "name": "CLIP_VISION",
+          "type": "CLIP_VISION",
+          "links": [
+            11
+          ]
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            12
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageOnlyCheckpointLoader"
+      },
+      "widgets_values": [
+        "svd_xt_1_1.safetensors"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "SONICSampler",
+      "pos": [
+        1268.95263671875,
+        -55.00899887084961
+      ],
+      "size": [
+        315,
+        174
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL_SONIC",
+          "link": 16
+        },
+        {
+          "name": "data_dict",
+          "type": "SONIC_PREDATA",
+          "link": 17
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            19
+          ]
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "links": [
+            18
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SONICSampler"
+      },
+      "widgets_values": [
+        1635757051,
+        "randomize",
+        25,
+        1,
+        25
+      ]
+    },
+    {
+      "id": 5,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        1702.5870361328125,
+        -229.3699951171875
+      ],
+      "size": [
+        214.7587890625,
+        276
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "shape": 7,
+          "link": 19
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "shape": 7,
+          "link": 21
+        },
+        {
+          "name": "meta_batch",
+          "type": "VHS_BatchManager",
+          "shape": 7,
+          "link": null
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "shape": 7,
+          "link": null
+        },
+        {
+          "name": "frame_rate",
+          "type": "FLOAT,INT",
+          "widget": {
+            "name": "frame_rate"
+          },
+          "link": 18
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Filenames",
+          "type": "VHS_FILENAMES",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 8,
+        "loop_count": 0,
+        "filename_prefix": "AnimateDiff",
+        "format": "image/gif",
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "filename": "AnimateDiff_00001.gif",
+            "subfolder": "",
+            "type": "output",
+            "format": "image/gif",
+            "frame_rate": 25,
+            "workflow": "AnimateDiff_00001.png",
+            "fullpath": "/home/ubuntu/phuc-workspace/cog-comfyUI-sonic-lip-sync/ComfyUI/output/AnimateDiff_00001.gif"
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        319.2469787597656,
+        51.93265151977539
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "leonnado.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "LoadAudio",
+      "pos": [
+        299.9999084472656,
+        -199.8181915283203
+      ],
+      "size": [
+        315,
+        124
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            13,
+            21
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadAudio"
+      },
+      "widgets_values": [
+        "sing_female_rap_10s.MP3",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 3,
+      "type": "SONIC_PreData",
+      "pos": [
+        819.3471069335938,
+        -52.34698486328125
+      ],
+      "size": [
+        315,
+        186
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip_vision",
+          "type": "CLIP_VISION",
+          "link": 11
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 12
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 13
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 14
+        },
+        {
+          "name": "weight_dtype",
+          "type": "DTYPE",
+          "link": 15
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_dict",
+          "type": "SONIC_PREDATA",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SONIC_PreData"
+      },
+      "widgets_values": [
+        512,
+        10,
+        0.5
+      ]
+    },
+    {
+      "id": 7,
+      "type": "SONICTLoader",
+      "pos": [
+        846.2392578125,
+        -383.7657775878906
+      ],
+      "size": [
+        315,
+        150
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 20
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL_SONIC",
+          "links": [
+            16
+          ]
+        },
+        {
+          "name": "dtype",
+          "type": "DTYPE",
+          "links": [
+            15
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SONICTLoader"
+      },
+      "widgets_values": [
+        "unet.pth",
+        1,
+        true,
+        "fp16"
+      ]
+    }
+  ],
+  "links": [
+    [
+      11,
+      12,
+      1,
+      3,
+      0,
+      "CLIP_VISION"
+    ],
+    [
+      12,
+      12,
+      2,
+      3,
+      1,
+      "VAE"
+    ],
+    [
+      13,
+      10,
+      0,
+      3,
+      2,
+      "AUDIO"
+    ],
+    [
+      14,
+      2,
+      0,
+      3,
+      3,
+      "IMAGE"
+    ],
+    [
+      15,
+      7,
+      1,
+      3,
+      4,
+      "DTYPE"
+    ],
+    [
+      16,
+      7,
+      0,
+      4,
+      0,
+      "MODEL_SONIC"
+    ],
+    [
+      17,
+      3,
+      0,
+      4,
+      1,
+      "SONIC_PREDATA"
+    ],
+    [
+      18,
+      4,
+      1,
+      5,
+      4,
+      "FLOAT,INT"
+    ],
+    [
+      19,
+      4,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      20,
+      12,
+      0,
+      7,
+      0,
+      "MODEL"
+    ],
+    [
+      21,
+      10,
+      0,
+      5,
+      1,
+      "AUDIO"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.8264462809917354,
+      "offset": [
+        -73.08688138179382,
+        533.6144761710926
+      ]
+    },
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}
