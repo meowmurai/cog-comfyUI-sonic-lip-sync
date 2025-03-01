@@ -10,7 +10,6 @@ from cog import BasePredictor, Input, Path
 from comfyui import ComfyUI
 from cog_model_helpers import optimise_images
 from cog_model_helpers import seed as seed_helper
-from huggingface_hub import snapshot_download, login, hf_hub_download
 import time
 
 OUTPUT_DIR = "/tmp/outputs"
@@ -43,32 +42,32 @@ class Predictor(BasePredictor):
         )
 
         # download custom weights
-        hf_token = os.getenv("HUGGINGFACE_TOKEN")
-        if not hf_token:
-            raise ValueError("Hugging Face token not found. Set HUGGINGFACE_TOKEN in env.")
-
-        login(token=hf_token, add_to_git_credential=False)
-
-        start_time = time.time()
-        snapshot_download(repo_id="phuc307/sonic-lip-sync", local_dir=os.path.join(COMFYUI_MODEL_DIR, "sonic"), local_dir_use_symlinks=False)
-        elapsed_time = time.time() - start_time
-        print(
-            f"✅ sonic checkpoints downloaded  in {elapsed_time:.2f}s"
-        )
-
-        start_time = time.time()
-        snapshot_download(repo_id="openai/whisper-tiny",allow_patterns=["model.safetensors", "preprocessor_config.json", "config.json"], local_dir=os.path.join(COMFYUI_MODEL_DIR, "sonic/whisper-tiny"), local_dir_use_symlinks=False)
-        elapsed_time = time.time() - start_time
-        print(
-            f"✅ whisper-tiny checkpoints downloaded  in {elapsed_time:.2f}s"
-        )
-
-        start_time = time.time()
-        hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt-1-1", filename="svd_xt_1_1.safetensors", local_dir=os.path.join(COMFYUI_MODEL_DIR, "checkpoints"))
-        elapsed_time = time.time() - start_time
-        print(
-            f"✅ svd checkpoint downloaded  in {elapsed_time:.2f}s"
-        )
+        # hf_token = os.getenv("HUGGINGFACE_TOKEN")
+        # if not hf_token:
+        #     raise ValueError("Hugging Face token not found. Set HUGGINGFACE_TOKEN in env.")
+        #
+        # login(token=hf_token, add_to_git_credential=False)
+        #
+        # start_time = time.time()
+        # snapshot_download(repo_id="phuc307/sonic-lip-sync", local_dir=os.path.join(COMFYUI_MODEL_DIR, "sonic"), local_dir_use_symlinks=False)
+        # elapsed_time = time.time() - start_time
+        # print(
+        #     f"✅ sonic checkpoints downloaded  in {elapsed_time:.2f}s"
+        # )
+        #
+        # start_time = time.time()
+        # snapshot_download(repo_id="openai/whisper-tiny",allow_patterns=["model.safetensors", "preprocessor_config.json", "config.json"], local_dir=os.path.join(COMFYUI_MODEL_DIR, "sonic/whisper-tiny"), local_dir_use_symlinks=False)
+        # elapsed_time = time.time() - start_time
+        # print(
+        #     f"✅ whisper-tiny checkpoints downloaded  in {elapsed_time:.2f}s"
+        # )
+        #
+        # start_time = time.time()
+        # hf_hub_download(repo_id="stabilityai/stable-video-diffusion-img2vid-xt-1-1", filename="svd_xt_1_1.safetensors", local_dir=os.path.join(COMFYUI_MODEL_DIR, "checkpoints"))
+        # elapsed_time = time.time() - start_time
+        # print(
+        #     f"✅ svd checkpoint downloaded  in {elapsed_time:.2f}s"
+        # )
 
     def filename_with_extension(self, input_file, prefix):
         extension = os.path.splitext(input_file.name)[1]
@@ -91,6 +90,9 @@ class Predictor(BasePredictor):
         load_image = workflow["2"]["inputs"]
         load_image["image"] = kwargs["image_filename"]
 
+        predata = workflow["3"]["inputs"]
+        predata["duration"] = kwargs["duration"]
+
         sampler = workflow["4"]["inputs"]
         sampler["seed"] = kwargs["seed"]
 
@@ -108,8 +110,13 @@ class Predictor(BasePredictor):
             default=None
         ),
         output_format: str = Input(
-            description="Output's format, ex: image/gif, image/webp, video/h264-mp4, ...",
-            default="image/gif"
+            description="Output's format",
+            default="video/mp4",
+            choices=["video/mp4", "image/gif", "video/webp", "image/webp"]
+        ),
+        duration: float = Input(
+            description="output video duration. Should be equal or less than the one of source audio",
+            default=10.0
         ),
         seed: int = seed_helper.predict_seed(),
     ) -> List[Path]:
@@ -139,6 +146,7 @@ class Predictor(BasePredictor):
             image_filename=image_filename,
             audio_filename=audio_filename,
             output_format=output_format,
+            duration=duration,
             seed=seed,
         )
 
