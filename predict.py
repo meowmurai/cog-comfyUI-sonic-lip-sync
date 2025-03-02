@@ -91,7 +91,8 @@ class Predictor(BasePredictor):
         load_image["image"] = kwargs["image_filename"]
 
         predata = workflow["3"]["inputs"]
-        predata["duration"] = kwargs["duration"]
+        # sonic_predata using the minium one between audio duration and inputed duration
+        predata["duration"] = kwargs["duration"] if kwargs["duration"] > 0 else 100000000000.0
 
         sampler = workflow["4"]["inputs"]
         sampler["seed"] = kwargs["seed"]
@@ -115,8 +116,8 @@ class Predictor(BasePredictor):
             choices=["video/mp4", "image/gif", "video/webp", "image/webp"]
         ),
         duration: float = Input(
-            description="output video duration. Should be equal or less than the one of source audio",
-            default=10.0
+            description="output video duration. Set to 0 to use input audio duration",
+            default=0
         ),
         seed: int = seed_helper.predict_seed(),
     ) -> List[Path]:
