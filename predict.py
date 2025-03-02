@@ -112,8 +112,8 @@ class Predictor(BasePredictor):
         ),
         output_format: str = Input(
             description="Output's format",
-            default="video/mp4",
-            choices=["video/mp4", "image/gif", "video/webp", "image/webp"]
+            default="video/h264-mp4",
+            choices=["video/h264-mp4", "image/gif", "video/webp", "image/webp"]
         ),
         duration: float = Input(
             description="output video duration. Set to 0 to use input audio duration",
@@ -136,9 +136,6 @@ class Predictor(BasePredictor):
             audio_filename = self.filename_with_extension(input_audio, "audio")
             self.handle_input_file(input_audio, audio_filename)
 
-        print("input: ", image_filename, audio_filename)
-        print("input dir: ", os.listdir(INPUT_DIR))
-
         with open(api_json_file, "r") as file:
             workflow = json.loads(file.read())
 
@@ -158,4 +155,4 @@ class Predictor(BasePredictor):
         # return optimise_images.optimise_image_files(
         #     output_format, output_quality, self.comfyUI.get_files(OUTPUT_DIR)
         # )
-        return self.comfyUI.get_files(COMFYUI_TEMP_OUTPUT_DIR)
+        return self.comfyUI.get_files(OUTPUT_DIR)
